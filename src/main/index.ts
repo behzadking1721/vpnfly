@@ -3,6 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { parseSubscription } from './core/subscription';
 import { startEngine, stopEngine, testNodeLatency } from './core/engine-manager';
+import { clearSystemProxy } from './core/system-proxy';
 
 // Fix for __dirname not being available in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -11,7 +12,7 @@ const __dirname = path.dirname(__filename);
 function createWindow() {
   const win = new BrowserWindow({
     width: 800,
-    height: 700, // کمی ارتفاع بیشتر برای UI جدید
+    height: 700,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -20,7 +21,7 @@ function createWindow() {
   });
 
   if (process.env.NODE_ENV === 'development') {
-    win.loadURL('http://localhost:5173'); // آدرس سرور توسعه Vite
+    win.loadURL('http://localhost:5173');
     win.webContents.openDevTools();
   } else {
     win.loadFile(path.join(__dirname, '../renderer/index.html'));
@@ -31,8 +32,6 @@ app.whenReady().then(createWindow);
 
 // --- IPC Handlers ---
 
-// دریافت و پارس کردن لینک اشتراک
-// FIX: Added subName parameter to handler and passed it to parseSubscription.
 ipcMain.handle('get-profiles-from-sub', async (event, subLink: string, subName: string) => {
   try {
     const profiles = await parseSubscription(subLink, subName);
@@ -43,12 +42,10 @@ ipcMain.handle('get-profiles-from-sub', async (event, subLink: string, subName: 
   }
 });
 
-// تست پینگ یک نود (از طریق مدیر موتور)
 ipcMain.handle('test-node-latency', async (event, profile) => {
   return await testNodeLatency(profile);
 });
 
-// شروع اتصال (از طریق مدیر موتور)
 ipcMain.handle('start-v2ray', async (event, profile) => {
   try {
     await startEngine(profile);
@@ -59,12 +56,19 @@ ipcMain.handle('start-v2ray', async (event, profile) => {
   }
 });
 
-// قطع اتصال (از طریق مدیر موتور)
-ipcMain.handle('stop-v2ray', () => {
-  stopEngine();
+ipcMain.handle('stop-v2ray', async () => {
+  await stopEngine();
 });
 
-// اطمینان از خاموش شدن موتور هنگام خروج از برنامه
-app.on('will-quit', () => {
-  stopEngine();
+// اطمینان از خاموش شدن موتور و پاک شدن پروکسی هنگام خروج از برنامه
+app.on('will-quit', async (event) => {
+    event.preventDefault(); // Prevent immediate exit
+    console.log("will-quit event: Stopping engine and clearing proxy...");
+    try {
+        await stopEngine();
+    } catch (e) {
+        console.error("Error during shutdown:", e);
+    } finally {
+        app.exit();
+    }
 });

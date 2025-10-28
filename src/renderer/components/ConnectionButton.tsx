@@ -50,6 +50,7 @@ const ConnectionButton: React.FC<ConnectionButtonProps> = ({ status, onDisconnec
         <div className="text-center mt-4">
             <p className="text-gray-400 text-sm">متصل به:</p>
             <p className="font-semibold text-cyan-300 truncate max-w-xs">{activeProfileName}</p>
+            <p className="text-xs text-green-400 mt-1">(پروکسی سیستم فعال است)</p>
         </div>
       )}
       {!isConnected && status !== ConnectionStatus.CONNECTING && (

@@ -3,14 +3,12 @@ import { ConnectionProfile } from '../../shared/types';
 import * as xrayEngine from './xray-engine';
 import * as hysteriaEngine from './hysteria-engine';
 import * as shadowsocksEngine from './shadowsocks-engine';
+import { setSystemProxy, clearSystemProxy } from './system-proxy';
 
-// A simple state to keep track of the currently active process
 let activeProcess: ChildProcess | null = null;
 
-// Generic interface for a VPN engine
 interface VpnEngine {
   start(profile: ConnectionProfile): Promise<ChildProcess>;
-  buildTestConfig?(profile: ConnectionProfile): string;
   test(profile: ConnectionProfile): Promise<number>;
 }
 
@@ -30,7 +28,7 @@ function getEngineForProfile(profile: ConnectionProfile): VpnEngine {
 }
 
 export async function startEngine(profile: ConnectionProfile): Promise<void> {
-  stopEngine(); // Ensure any old process is stopped first
+  await stopEngine(); // Ensure any old process/proxy setting is stopped first
   
   const engine = getEngineForProfile(profile);
   activeProcess = await engine.start(profile);
@@ -38,15 +36,22 @@ export async function startEngine(profile: ConnectionProfile): Promise<void> {
   activeProcess.on('exit', () => {
     activeProcess = null;
     console.log(`Engine process for ${profile.name} exited.`);
+    // اگر پروسه به صورت غیرمنتظره بسته شد، پروکسی را پاک کن
+    clearSystemProxy().catch(err => console.error('[SystemProxy] Failed to clear proxy on unexpected exit:', err));
   });
+
+  // بعد از اجرای موفقیت‌آمیز موتور، پروکسی سیستم را تنظیم کن
+  await setSystemProxy();
 }
 
-export function stopEngine(): void {
+export async function stopEngine(): Promise<void> {
   if (activeProcess) {
     activeProcess.kill('SIGTERM');
     activeProcess = null;
     console.log('Active VPN engine stopped.');
   }
+  // همیشه هنگام توقف، پروکسی سیستم را پاک کن
+  await clearSystemProxy();
 }
 
 export async function testNodeLatency(profile: ConnectionProfile): Promise<number> {
