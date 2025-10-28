@@ -4,8 +4,9 @@ import { ConnectionProfile } from '../shared/types';
 // تعریف API کامل برای ارتباط امن بین فرانت‌اند و بک‌اند
 export const api = {
   // دریافت پروفایل‌ها از لینک اشتراک
-  getProfilesFromSub: (subLink: string): Promise<{ success: boolean, data?: ConnectionProfile[], error?: string }> => {
-    return ipcRenderer.invoke('get-profiles-from-sub', subLink);
+  // FIX: Added subName parameter to match the call from the renderer and the handler in the main process.
+  getProfilesFromSub: (subLink: string, subName: string): Promise<{ success: boolean, data?: ConnectionProfile[], error?: string }> => {
+    return ipcRenderer.invoke('get-profiles-from-sub', subLink, subName);
   },
   
   // تست پینگ یک نود خاص

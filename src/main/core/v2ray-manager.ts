@@ -1,94 +1,105 @@
 import { ChildProcess, spawn } from 'child_process';
 import path from 'path';
 import fs from 'fs';
-// Fix for 'Cannot find name 'app'' error
 import { app } from 'electron';
 import { fileURLToPath } from 'url';
 import { ConnectionProfile } from '../../shared/types';
 
 let v2rayProcess: ChildProcess | null = null;
 
-// Fix for __dirname not being available in ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// تابع برای ساخت فایل کانفیگ کلاینت V2Ray
+// تابع برای ساخت فایل کانفیگ کلاینت V2Ray/Xray
 function buildClientConfig(profile: ConnectionProfile): string {
-  const config = {
+  const baseConfig = {
     "inbounds": [
       {
-        "port": 10808, // پورت پراکسی SOCKS
+        "port": 10808,
         "listen": "127.0.0.1",
         "protocol": "socks",
-        "settings": {
-          "auth": "noauth",
-          "udp": true
-        }
+        "settings": { "auth": "noauth", "udp": true }
       },
       {
-        "port": 10809, // پورت پراکسی HTTP
+        "port": 10809,
         "listen": "127.0.0.1",
         "protocol": "http",
-        "settings": {
-          "auth": "noauth"
-        }
+        "settings": { "auth": "noauth" }
       }
     ],
     "outbounds": [
       {
         "protocol": profile.type,
-        "settings": {
-          // اینجا تنظیمات outbound بر اساس نوع پروتکل قرار می‌گیرد
-          // برای vmess:
-          "vnext": [
-            {
-              "address": profile.server,
-              "port": profile.port,
-              "users": [
-                {
-                  "id": profile.uuid,
-                  "alterId": profile.config.aid || 0,
-                  "security": profile.config.scy || "auto"
-                }
-              ]
-            }
-          ]
-        },
+        "settings": {},
         "streamSettings": {
-          // اینجا تنظیمات stream مثل ws, grpc, ... قرار می‌گیرد
-          "network": profile.config.net || "tcp",
-          // ...
+          "network": profile.network || 'tcp',
+          "security": profile.security || 'none',
+          "tlsSettings": profile.security === 'tls' ? { "serverName": profile.sni || profile.server } : undefined,
+          "wsSettings": profile.network === 'ws' ? { "path": profile.path || '/' } : undefined,
         }
       }
     ]
   };
-  return JSON.stringify(config, null, 2);
+
+  const outboundSettings: any = {};
+  if (profile.type === 'vmess' || profile.type === 'vless') {
+    outboundSettings.vnext = [{
+      "address": profile.server,
+      "port": profile.port,
+      "users": [{
+        "id": profile.uuid,
+        "alterId": profile.type === 'vmess' ? (profile.config.aid || 0) : undefined,
+        "security": profile.type === 'vmess' ? (profile.config.scy || "auto") : undefined,
+        "flow": profile.type === 'vless' ? "xtls-rprx-vision" : undefined
+      }]
+    }];
+  } else if (profile.type === 'trojan') {
+    outboundSettings.servers = [{
+      "address": profile.server,
+      "port": profile.port,
+      "password": profile.password
+    }];
+  }
+
+  baseConfig.outbounds[0].settings = outboundSettings;
+  
+  return JSON.stringify(baseConfig, null, 2);
 }
 
 // تابع برای اجرای V2Ray
 export function startV2Ray(profile: ConnectionProfile): Promise<void> {
   return new Promise((resolve, reject) => {
+    stopV2Ray(); // Stop any existing process first
+
     const configJson = buildClientConfig(profile);
     const configPath = path.join(app.getPath('userData'), 'config.json');
     fs.writeFileSync(configPath, configJson);
-
-    // مسیر باینری را بر اساس سیستم‌عامل پیدا کن
-    // این یک مثال ساده است
-    const binaryPath = path.join(__dirname, '../../../assets/binaries/win/xray.exe');
-
-    if (v2rayProcess) {
-      v2rayProcess.kill();
+    
+    // مسیر باینری باید به صورت داینامیک بر اساس سیستم‌عامل و معماری تعیین شود.
+    // این یک مثال برای ویندوز است.
+    const binaryPath = path.join(app.getAppPath(), 'dist/assets/binaries/win/xray.exe');
+    
+    if (!fs.existsSync(binaryPath)) {
+        return reject(new Error(`V2Ray binary not found at ${binaryPath}`));
     }
 
-    v2rayProcess = spawn(binaryPath, ['-c', configPath]);
+    try {
+        v2rayProcess = spawn(binaryPath, ['-c', configPath]);
 
-    v2rayProcess.stdout?.on('data', (data) => console.log(`V2Ray stdout: ${data}`));
-    v2rayProcess.stderr?.on('data', (data) => console.error(`V2Ray stderr: ${data}`));
-    v2rayProcess.on('close', (code) => console.log(`V2Ray process exited with code ${code}`));
-    
-    // فرض می‌کنیم که اگر پروسه با موفقیت اجرا شد، اتصال برقرار است
-    // در عمل باید منتظر پیام خاصی از stdout ماند
-    setTimeout(() => resolve(), 1000);
+        v2rayProcess.stdout?.on('data', (data) => console.log(`V2Ray stdout: ${data}`));
+        v2rayProcess.stderr?.on('data', (data) => console.error(`V2Ray stderr: ${data}`));
+        v2rayProcess.on('close', (code) => console.log(`V2Ray process exited with code ${code}`));
+        v2rayProcess.on('error', (err) => {
+            console.error('Failed to start V2Ray process:', err);
+            reject(err);
+        });
+        
+        // Assume connection is successful after a short delay
+        setTimeout(() => resolve(), 1500);
+
+    } catch (error) {
+        reject(error);
+    }
   });
 }
 

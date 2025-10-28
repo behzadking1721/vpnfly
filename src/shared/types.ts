@@ -3,19 +3,38 @@ export enum ConnectionStatus {
   CONNECTING = 'CONNECTING',
   CONNECTED = 'CONNECTED',
   DISCONNECTING = 'DISCONNECTING',
-  TESTING = 'TESTING', // وضعیت کلی برای زمانی که تست پینگ در حال اجراست
+  TESTING = 'TESTING',
   ERROR = 'ERROR'
+}
+
+export interface Subscription {
+  id: string; // شناسه منحصر به فرد (e.g., timestamp)
+  name: string; // نام دلخواه کاربر
+  url: string; // لینک اشتراک
 }
 
 // اینترفیس کامل برای یک نود استخراج شده از لینک اشتراک
 export interface ConnectionProfile {
   id: string; // شناسه منحصر به فرد (مثلاً hash از کانفیگ)
   name: string; // نام نود (ps)
-  type: 'vmess' | 'vless' | 'trojan' | 'shadowsocks';
+  type: 'vmess' | 'vless' | 'trojan' | 'shadowsocks' | 'unknown';
   server: string; // آدرس سرور (add)
   port: number; // پورت (port)
-  uuid: string; // UUID برای vmess/vless
-  config: any; // آبجکت کامل کانفیگ نود
+  
+  // Fields for vmess/vless
+  uuid?: string; 
+  
+  // Fields for trojan
+  password?: string;
+
+  // Stream settings
+  network?: string; // ws, tcp, grpc
+  security?: string; // tls
+  sni?: string; // server name indication for tls
+  path?: string; // path for ws/grpc
+
+  config: any; // آبجکت کامل کانفیگ نود برای دسترسی‌های آتی
+  subscriptionName: string; // نام اشتراکی که این پروفایل از آن آمده
   
   // فیلدهای مربوط به وضعیت در UI
   ping?: number; // پینگ به میلی‌ثانیه

@@ -14,40 +14,46 @@ const PingIndicator: React.FC<{ ping?: number, status?: 'testing' | 'tested' }> 
   }
 
   if (typeof ping !== 'number') {
-    return <span className="text-gray-500">--- ms</span>;
+    return <span className="text-sm font-mono text-gray-500 w-20 text-right">--- ms</span>;
   }
 
   const colorClass = ping < 150 ? 'text-green-400' : ping < 300 ? 'text-yellow-400' : 'text-red-500';
 
-  return <span className={`font-mono font-semibold ${colorClass}`}>{ping} ms</span>;
+  return <span className={`text-sm font-mono font-semibold ${colorClass} w-20 text-right`}>{ping} ms</span>;
 };
 
 const ProfileItem: React.FC<ProfileItemProps> = ({ profile, isActive, isBusy, onConnect }) => {
-  const baseClasses = "w-full flex items-center justify-between p-3 rounded-lg transition-all duration-200";
-  const activeClasses = isActive ? "bg-green-600/30 ring-2 ring-green-500" : "bg-gray-700/50 hover:bg-gray-700";
+  const baseClasses = "w-full flex items-center justify-between p-3 rounded-lg transition-all duration-200 cursor-pointer";
+  const activeClasses = isActive ? "bg-green-600/30 ring-2 ring-green-500" : "bg-gray-800 hover:bg-gray-700/80";
+  const disabledClasses = isBusy && !isActive ? "opacity-50 cursor-not-allowed" : "";
 
   return (
-    <div className={`${baseClasses} ${activeClasses}`}>
-      <div className="flex flex-col">
-        <p className="font-semibold text-white">{profile.name}</p>
-        <span className="text-xs font-mono text-cyan-400">{profile.type} - {profile.server}:{profile.port}</span>
+    <div className={`${baseClasses} ${activeClasses} ${disabledClasses}`} onClick={() => !isBusy && !isActive && onConnect()}>
+      <div className="flex-1 min-w-0">
+        <p className="font-semibold text-white truncate" title={profile.name}>{profile.name}</p>
+        <div className="flex items-center gap-2 text-xs text-gray-400">
+            <span className="font-mono text-cyan-400 uppercase">{profile.type}</span>
+            <span className="truncate hidden sm:inline">{profile.server}:{profile.port}</span>
+            <span className="bg-gray-700 px-2 py-0.5 rounded text-gray-300">{profile.subscriptionName}</span>
+        </div>
       </div>
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 ml-2">
         <PingIndicator ping={profile.ping} status={profile.status} />
-        {!isActive && (
-          <button 
-            onClick={onConnect}
-            disabled={isBusy}
-            className="px-3 py-1 text-sm font-semibold text-white bg-green-600 rounded-md hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed"
-          >
-            اتصال
-          </button>
-        )}
-        {isActive && (
-          <span className="px-3 py-1 text-sm font-semibold text-green-300 bg-green-800/50 rounded-full">
-            متصل ✅
-          </span>
-        )}
+        <div className="w-24 text-center">
+            {isActive ? (
+              <span className="px-3 py-1 text-sm font-semibold text-green-300 bg-green-800/50 rounded-full">
+                متصل
+              </span>
+            ) : (
+              <button 
+                onClick={(e) => { e.stopPropagation(); onConnect(); }}
+                disabled={isBusy}
+                className="px-3 py-1 text-sm font-semibold text-white bg-green-600 rounded-md hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed"
+              >
+                اتصال
+              </button>
+            )}
+        </div>
       </div>
     </div>
   );

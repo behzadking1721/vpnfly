@@ -33,9 +33,10 @@ app.whenReady().then(createWindow);
 // --- IPC Handlers ---
 
 // دریافت و پارس کردن لینک اشتراک
-ipcMain.handle('get-profiles-from-sub', async (event, subLink: string) => {
+// FIX: Added subName parameter to handler and passed it to parseSubscription.
+ipcMain.handle('get-profiles-from-sub', async (event, subLink: string, subName: string) => {
   try {
-    const profiles = await parseSubscription(subLink);
+    const profiles = await parseSubscription(subLink, subName);
     return { success: true, data: profiles };
   } catch (error: any) {
     console.error('Failed to parse subscription:', error);
