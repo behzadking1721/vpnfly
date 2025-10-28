@@ -2,13 +2,10 @@ import { ChildProcess, spawn } from 'child_process';
 import path from 'path';
 import fs from 'fs';
 import { app } from 'electron';
-import { fileURLToPath } from 'url';
 import { ConnectionProfile } from '../../shared/types';
+import { getBinaryPath } from './utils';
 
 let v2rayProcess: ChildProcess | null = null;
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 // تابع برای ساخت فایل کانفیگ کلاینت V2Ray/Xray
 function buildClientConfig(profile: ConnectionProfile): string {
@@ -75,15 +72,9 @@ export function startV2Ray(profile: ConnectionProfile): Promise<void> {
     const configPath = path.join(app.getPath('userData'), 'config.json');
     fs.writeFileSync(configPath, configJson);
     
-    // مسیر باینری باید به صورت داینامیک بر اساس سیستم‌عامل و معماری تعیین شود.
-    // این یک مثال برای ویندوز است.
-    const binaryPath = path.join(app.getAppPath(), 'dist/assets/binaries/win/xray.exe');
-    
-    if (!fs.existsSync(binaryPath)) {
-        return reject(new Error(`V2Ray binary not found at ${binaryPath}`));
-    }
-
     try {
+        const binaryPath = getBinaryPath();
+        
         v2rayProcess = spawn(binaryPath, ['-c', configPath]);
 
         v2rayProcess.stdout?.on('data', (data) => console.log(`V2Ray stdout: ${data}`));

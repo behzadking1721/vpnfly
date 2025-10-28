@@ -16,6 +16,10 @@ const PingIndicator: React.FC<{ ping?: number, status?: 'testing' | 'tested' }> 
   if (typeof ping !== 'number') {
     return <span className="text-sm font-mono text-gray-500 w-20 text-right">--- ms</span>;
   }
+  
+  if (ping === -1) {
+    return <span className="text-sm font-semibold text-red-500 w-20 text-right">Timeout</span>;
+  }
 
   const colorClass = ping < 150 ? 'text-green-400' : ping < 300 ? 'text-yellow-400' : 'text-red-500';
 

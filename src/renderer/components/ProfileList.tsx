@@ -19,28 +19,48 @@ const ProfileList: React.FC<ProfileListProps> = ({ profiles, setProfiles, isLoad
     setIsTesting(true);
     const updatedProfiles = [...profiles];
     
-    const testPromises = updatedProfiles.map(async (profile, index) => {
-      // Set status to testing immediately for UI feedback
-      const testingProfile = { ...profile, status: 'testing' as const };
-      setProfiles(prev => prev.map(p => p.id === profile.id ? testingProfile : p));
-      
-      const ping = await window.api.testNodeLatency(profile);
-      
-      const testedProfile = { ...testingProfile, ping, status: 'tested' as const };
-      // Update the profile in the original array to maintain order for batch update
-      updatedProfiles[index] = testedProfile;
+    // Create a queue to run 5 tests at a time
+    const concurrencyLimit = 5;
+    const queue = [...updatedProfiles];
+
+    const runTest = async (profile: ConnectionProfile) => {
+        // Set status to testing immediately for UI feedback
+        const testingProfile = { ...profile, status: 'testing' as const };
+        setProfiles(prev => prev.map(p => p.id === profile.id ? testingProfile : p));
+        
+        const ping = await window.api.testNodeLatency(profile);
+        
+        const testedProfile = { ...testingProfile, ping, status: 'tested' as const };
+        
+        // Update the main state with the result
+        setProfiles(prev => prev.map(p => p.id === profile.id ? testedProfile : p));
+    };
+
+    const workers = Array(concurrencyLimit).fill(null).map(async () => {
+        while(queue.length > 0) {
+            const profile = queue.shift();
+            if (profile) {
+                await runTest(profile);
+            }
+        }
     });
 
-    await Promise.all(testPromises);
-    setProfiles(updatedProfiles);
+    await Promise.all(workers);
+
     setIsTesting(false);
   };
 
   const handleSortByPing = () => {
     const sortedProfiles = [...profiles].sort((a, b) => {
-      if (a.ping === undefined) return 1;
-      if (b.ping === undefined) return -1;
-      return a.ping - b.ping;
+      // Treat undefined/null pings as infinite
+      const pingA = a.ping ?? Infinity;
+      const pingB = b.ping ?? Infinity;
+      
+      // Treat failed tests (-1) as infinite
+      const effectivePingA = pingA === -1 ? Infinity : pingA;
+      const effectivePingB = pingB === -1 ? Infinity : pingB;
+
+      return effectivePingA - effectivePingB;
     });
     setProfiles(sortedProfiles);
   };
