@@ -1,0 +1,5 @@
+{
+  "name": "vpnfly Client (Desktop App)",
+  "description": "یک کلاینت دسکتاپ V2Ray/Xray مشابه Hiddify، ساخته شده با Electron و React. این برنامه به تریدرها اجازه می‌دهد لینک‌های اشتراک را مدیریت کرده، بهترین نود را بر اساس پینگ و سرعت انتخاب کنند و به صورت امن متصل شوند.",
+  "requestFramePermissions": []
+}
