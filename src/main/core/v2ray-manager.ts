@@ -73,7 +73,8 @@ export function startV2Ray(profile: ConnectionProfile): Promise<void> {
     fs.writeFileSync(configPath, configJson);
     
     try {
-        const binaryPath = getBinaryPath();
+        // FIX: Added 'xray' argument to getBinaryPath to satisfy its signature.
+        const binaryPath = getBinaryPath('xray');
         
         v2rayProcess = spawn(binaryPath, ['-c', configPath]);
 

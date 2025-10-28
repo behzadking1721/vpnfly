@@ -2,25 +2,49 @@ import path from 'path';
 import fs from 'fs';
 import { app } from 'electron';
 
+export type EngineType = 'xray' | 'hysteria' | 'shadowsocks';
+
 /**
- * Determines the correct path for the V2Ray/Xray binary.
- * This can be expanded to support multiple OS and architectures.
+ * Determines the correct path for a given engine's binary.
+ * This is simplified for Windows, but can be extended for other platforms.
+ * @param engine The type of engine to find the binary for.
  * @returns The absolute path to the binary.
  * @throws An error if the binary is not found.
  */
-export function getBinaryPath(): string {
-  // This is a simplified example for Windows. A real app would check
-  // process.platform and process.arch to determine the correct binary.
-  // e.g., 'assets/binaries/linux/xray', 'assets/binaries/mac/xray'
-  const binaryName = 'xray.exe';
-  const platformDir = 'win';
+export function getBinaryPath(engine: EngineType): string {
+  // A real app would use process.platform and process.arch for cross-platform support.
+  const platformDir = 'win'; 
+  let binaryName: string;
 
-  // In production, app.getAppPath() points to the app's root in the ASAR archive.
-  // We assume the binaries are packaged alongside the main script.
-  const binaryPath = path.join(app.getAppPath(), `dist/assets/binaries/${platformDir}/${binaryName}`);
-  
-  if (!fs.existsSync(binaryPath)) {
-      throw new Error(`V2Ray/Xray binary not found at ${binaryPath}`);
+  switch (engine) {
+    case 'xray':
+      binaryName = 'xray.exe';
+      break;
+    case 'hysteria':
+      binaryName = 'hysteria.exe';
+      break;
+    case 'shadowsocks':
+      binaryName = 'ss-local.exe';
+      break;
+    default:
+      throw new Error(`Unsupported engine type: ${engine}`);
   }
+
+  // Path when running in development vs. packaged app can be different.
+  // This logic tries to handle both.
+  const baseDir = app.isPackaged
+    ? path.join(process.resourcesPath, 'assets')
+    : path.join(app.getAppPath(), 'assets'); // Adjust if your assets folder is elsewhere
+
+  const binaryPath = path.join(baseDir, `binaries/${platformDir}/${binaryName}`);
+
+  if (!fs.existsSync(binaryPath)) {
+    // Fallback for development if structure is different
+    const devPath = path.join(__dirname, `../../../../assets/binaries/${platformDir}/${binaryName}`);
+    if(fs.existsSync(devPath)) return devPath;
+
+    throw new Error(`${engine} binary not found at ${binaryPath}`);
+  }
+  
   return binaryPath;
 }

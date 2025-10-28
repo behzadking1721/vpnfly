@@ -2,8 +2,7 @@ import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { parseSubscription } from './core/subscription';
-import { testNodeLatency } from './core/node-tester';
-import { startV2Ray, stopV2Ray } from './core/v2ray-manager';
+import { startEngine, stopEngine, testNodeLatency } from './core/engine-manager';
 
 // Fix for __dirname not being available in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -44,23 +43,28 @@ ipcMain.handle('get-profiles-from-sub', async (event, subLink: string, subName: 
   }
 });
 
-// تست پینگ یک نود
+// تست پینگ یک نود (از طریق مدیر موتور)
 ipcMain.handle('test-node-latency', async (event, profile) => {
   return await testNodeLatency(profile);
 });
 
-// شروع اتصال V2Ray
+// شروع اتصال (از طریق مدیر موتور)
 ipcMain.handle('start-v2ray', async (event, profile) => {
   try {
-    await startV2Ray(profile);
+    await startEngine(profile);
     return { success: true };
   } catch (error: any) {
-    console.error('Failed to start V2Ray:', error);
+    console.error(`Failed to start engine for ${profile.type}:`, error);
     return { success: false, error: error.message };
   }
 });
 
-// قطع اتصال V2Ray
+// قطع اتصال (از طریق مدیر موتور)
 ipcMain.handle('stop-v2ray', () => {
-  stopV2Ray();
+  stopEngine();
+});
+
+// اطمینان از خاموش شدن موتور هنگام خروج از برنامه
+app.on('will-quit', () => {
+  stopEngine();
 });

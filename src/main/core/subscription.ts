@@ -11,7 +11,7 @@ export async function parseSubscription(subUrl: string, subName: string): Promis
   const links = decodedData.split(/[\r\n]+/).filter(link => link.trim() !== '');
   
   const profiles: ConnectionProfile[] = links.map(link => {
-    const profile = parseV2RayLink(link);
+    const profile = parseGenericLink(link);
     if (profile) {
       profile.subscriptionName = subName;
     }
@@ -22,7 +22,7 @@ export async function parseSubscription(subUrl: string, subName: string): Promis
 }
 
 // تابع کمکی برای پارس کردن یک لینک تکی
-function parseV2RayLink(link: string): ConnectionProfile | null {
+function parseGenericLink(link: string): ConnectionProfile | null {
   try {
     const protocol = link.split('://')[0];
     switch (protocol) {
@@ -32,6 +32,10 @@ function parseV2RayLink(link: string): ConnectionProfile | null {
         return parseVlessLink(link);
       case 'trojan':
         return parseTrojanLink(link);
+      case 'ss':
+        return parseShadowsocksLink(link);
+      case 'hy2':
+        return parseHysteria2Link(link);
       default:
         return null;
     }
@@ -90,6 +94,41 @@ function parseTrojanLink(link: string): ConnectionProfile | null {
         id: `${url.hostname}:${url.port}-${url.username}`,
         name: name || `${url.hostname}:${url.port}`,
         type: 'trojan',
+        server: url.hostname,
+        port: parseInt(url.port, 10),
+        password: url.username,
+        sni: url.searchParams.get('sni'),
+        config: Object.fromEntries(url.searchParams.entries()),
+        subscriptionName: '',
+    };
+}
+
+function parseShadowsocksLink(link: string): ConnectionProfile | null {
+    const url = new URL(link);
+    const name = decodeURIComponent(url.hash.substring(1));
+    const userInfo = Buffer.from(url.username, 'base64').toString('utf8').split(':');
+    
+    return {
+        id: `ss-${url.hostname}:${url.port}`,
+        name: name || `${url.hostname}:${url.port}`,
+        type: 'shadowsocks',
+        server: url.hostname,
+        port: parseInt(url.port, 10),
+        method: userInfo[0],
+        password: userInfo[1],
+        config: {},
+        subscriptionName: '',
+    };
+}
+
+function parseHysteria2Link(link: string): ConnectionProfile | null {
+    const url = new URL(link);
+    const name = decodeURIComponent(url.hash.substring(1));
+
+    return {
+        id: `hy2-${url.hostname}:${url.port}`,
+        name: name || `${url.hostname}:${url.port}`,
+        type: 'hysteria2',
         server: url.hostname,
         port: parseInt(url.port, 10),
         password: url.username,

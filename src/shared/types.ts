@@ -17,17 +17,20 @@ export interface Subscription {
 export interface ConnectionProfile {
   id: string; // شناسه منحصر به فرد (مثلاً hash از کانفیگ)
   name: string; // نام نود (ps)
-  type: 'vmess' | 'vless' | 'trojan' | 'shadowsocks' | 'unknown';
+  type: 'vmess' | 'vless' | 'trojan' | 'shadowsocks' | 'hysteria2' | 'unknown';
   server: string; // آدرس سرور (add)
   port: number; // پورت (port)
   
   // Fields for vmess/vless
   uuid?: string; 
   
-  // Fields for trojan
+  // Fields for trojan/hysteria2
   password?: string;
 
-  // Stream settings
+  // Fields for shadowsocks
+  method?: string;
+
+  // Stream settings (for xray)
   network?: string; // ws, tcp, grpc
   security?: string; // tls
   sni?: string; // server name indication for tls

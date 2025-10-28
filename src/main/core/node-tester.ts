@@ -68,7 +68,8 @@ export async function testNodeLatency(profile: ConnectionProfile): Promise<numbe
         const configJson = buildTestConfig(profile);
         fs.writeFileSync(configPath, configJson);
 
-        const binaryPath = getBinaryPath();
+        // FIX: Added 'xray' argument to getBinaryPath to satisfy its signature.
+        const binaryPath = getBinaryPath('xray');
         testProcess = spawn(binaryPath, ['-c', configPath]);
 
         // Add listeners to debug the test process if needed
