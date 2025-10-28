@@ -6,9 +6,10 @@ import axios from 'axios';
 import { SocksProxyAgent } from 'socks-proxy-agent';
 import { ConnectionProfile } from '../../shared/types';
 import { getBinaryPath } from './utils';
+import { startSocksToHttpConverter } from './proxy-converter';
 
 const TEST_SOCKS_PORT = 10887; // Different port to avoid conflict
-const MAIN_SOCKS_PORT = 10808; // Hysteria can also provide SOCKS5
+const MAIN_SOCKS_PORT = 10808; // Hysteria provides SOCKS5
 const TEST_TARGET_URL = 'http://www.google.com/generate_204';
 const TEST_TIMEOUT = 5000;
 
@@ -31,20 +32,25 @@ function buildConfig(profile: ConnectionProfile, isTest: boolean): string {
     return JSON.stringify(config, null, 2);
 }
 
-export function start(profile: ConnectionProfile): Promise<ChildProcess> {
-  return new Promise((resolve, reject) => {
+export async function start(profile: ConnectionProfile): Promise<ChildProcess[]> {
     const configJson = buildConfig(profile, false);
     const configPath = path.join(app.getPath('userData'), 'hysteria_config.json');
     fs.writeFileSync(configPath, configJson);
     
     try {
         const binaryPath = getBinaryPath('hysteria');
-        const process = spawn(binaryPath, ['client', '-c', configPath]);
-        setTimeout(() => resolve(process), 1000);
+        const hysteriaProcess = spawn(binaryPath, ['client', '-c', configPath]);
+
+        // Wait a moment for hysteria to bind to the port
+        await new Promise(res => setTimeout(res, 500)); 
+        
+        const converterProcess = await startSocksToHttpConverter(MAIN_SOCKS_PORT);
+
+        return [hysteriaProcess, converterProcess];
     } catch (error) {
-        reject(error);
+        console.error("[Hysteria Engine] Failed to start engine chain:", error);
+        throw error;
     }
-  });
 }
 
 export async function test(profile: ConnectionProfile): Promise<number> {
@@ -82,6 +88,8 @@ export async function test(profile: ConnectionProfile): Promise<number> {
         return -1;
     } finally {
         testProcess?.kill('SIGTERM');
-        if (fs.existsSync(configPath)) fs.unlinkSync(configPath);
+        if (fs.existsSync(configPath)) {
+            try { fs.unlinkSync(configPath); } catch {}
+        }
     }
 }

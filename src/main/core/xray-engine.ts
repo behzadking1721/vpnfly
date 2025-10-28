@@ -71,7 +71,7 @@ function buildConfig(profile: ConnectionProfile, isTest: boolean): string {
   return JSON.stringify(baseConfig, null, 2);
 }
 
-export function start(profile: ConnectionProfile): Promise<ChildProcess> {
+export function start(profile: ConnectionProfile): Promise<ChildProcess[]> {
   return new Promise((resolve, reject) => {
     const configJson = buildConfig(profile, false);
     const configPath = path.join(app.getPath('userData'), 'config.json');
@@ -81,7 +81,7 @@ export function start(profile: ConnectionProfile): Promise<ChildProcess> {
         const binaryPath = getBinaryPath('xray');
         const process = spawn(binaryPath, ['-c', configPath]);
         // Simple assumption of success for now
-        setTimeout(() => resolve(process), 1000); 
+        setTimeout(() => resolve([process]), 1000); 
     } catch (error) {
         reject(error);
     }
@@ -101,13 +101,14 @@ export async function test(profile: ConnectionProfile): Promise<number> {
 
         await new Promise<void>((resolve, reject) => {
             const timer = setTimeout(() => reject(new Error('Test process timed out')), 4000);
-            testProcess?.stdout?.once('data', () => { clearTimeout(timer); resolve(); });
-            testProcess?.stderr?.once('data', (data) => {
-              if (data.toString().includes('core started')) {
-                clearTimeout(timer);
-                resolve();
-              }
-            });
+            const listener = (data: Buffer) => {
+                if(data.toString().includes('core started')) {
+                    clearTimeout(timer);
+                    resolve();
+                }
+            };
+            testProcess?.stdout?.on('data', listener);
+            testProcess?.stderr?.on('data', listener);
             testProcess?.on('error', reject);
         });
 
@@ -122,6 +123,8 @@ export async function test(profile: ConnectionProfile): Promise<number> {
         return -1;
     } finally {
         testProcess?.kill('SIGTERM');
-        if (fs.existsSync(configPath)) fs.unlinkSync(configPath);
+        if (fs.existsSync(configPath)) {
+            try { fs.unlinkSync(configPath); } catch {}
+        }
     }
 }

@@ -3,6 +3,7 @@ import axios from 'axios';
 import { SocksProxyAgent } from 'socks-proxy-agent';
 import { ConnectionProfile } from '../../shared/types';
 import { getBinaryPath } from './utils';
+import { startSocksToHttpConverter } from './proxy-converter';
 
 const TEST_SOCKS_PORT = 10886; // Different port to avoid conflict
 const MAIN_SOCKS_PORT = 10808;
@@ -21,17 +22,22 @@ function getArgs(profile: ConnectionProfile, isTest: boolean): string[] {
     ];
 }
 
-export function start(profile: ConnectionProfile): Promise<ChildProcess> {
-  return new Promise((resolve, reject) => {
-    try {
-        const binaryPath = getBinaryPath('shadowsocks');
-        const args = getArgs(profile, false);
-        const process = spawn(binaryPath, args);
-        setTimeout(() => resolve(process), 1000);
-    } catch (error) {
-        reject(error);
-    }
-  });
+export async function start(profile: ConnectionProfile): Promise<ChildProcess[]> {
+  try {
+      const binaryPath = getBinaryPath('shadowsocks');
+      const args = getArgs(profile, false);
+      const ssProcess = spawn(binaryPath, args);
+      
+      // Wait a moment for ss-local to bind to the port
+      await new Promise(res => setTimeout(res, 500)); 
+
+      const converterProcess = await startSocksToHttpConverter(MAIN_SOCKS_PORT);
+      
+      return [ssProcess, converterProcess];
+  } catch (error) {
+      console.error("[Shadowsocks Engine] Failed to start engine chain:", error);
+      throw error; // Rethrow to be caught by the main handler
+  }
 }
 
 export async function test(profile: ConnectionProfile): Promise<number> {
