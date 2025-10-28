@@ -2,7 +2,8 @@ export enum ConnectionStatus {
   DISCONNECTED = 'DISCONNECTED',
   CONNECTING = 'CONNECTING',
   CONNECTED = 'CONNECTED',
-  TESTING = 'TESTING',
+  DISCONNECTING = 'DISCONNECTING',
+  TESTING = 'TESTING', // وضعیت کلی برای زمانی که تست پینگ در حال اجراست
   ERROR = 'ERROR'
 }
 
@@ -14,7 +15,9 @@ export interface ConnectionProfile {
   server: string; // آدرس سرور (add)
   port: number; // پورت (port)
   uuid: string; // UUID برای vmess/vless
-  // ... سایر پارامترهای خاص هر پروتکل
   config: any; // آبجکت کامل کانفیگ نود
+  
+  // فیلدهای مربوط به وضعیت در UI
   ping?: number; // پینگ به میلی‌ثانیه
+  status?: 'testing' | 'tested'; // وضعیت تست پینگ هر نود
 }

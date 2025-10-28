@@ -1,16 +1,27 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import { ConnectionProfile } from '../shared/types';
 
-// توابعی که می‌خواهیم از فرانت‌اند (React) به آنها دسترسی داشته باشیم
-const api = {
-  // تابع برای ارسال درخواست دریافت پروفایل‌ها به بک‌اند
-  getProfilesFromSub: (subLink: string): Promise<ConnectionProfile[]> => {
+// تعریف API کامل برای ارتباط امن بین فرانت‌اند و بک‌اند
+export const api = {
+  // دریافت پروفایل‌ها از لینک اشتراک
+  getProfilesFromSub: (subLink: string): Promise<{ success: boolean, data?: ConnectionProfile[], error?: string }> => {
     return ipcRenderer.invoke('get-profiles-from-sub', subLink);
   },
-  // اینجا توابع دیگری مثل تست نودها، اتصال و قطع اتصال اضافه خواهد شد
-  // مثلا: testNode(profileId: string): Promise<number>
-  // مثلا: connect(profileId: string): Promise<boolean>
-  // مثلا: disconnect(): Promise<void>
+  
+  // تست پینگ یک نود خاص
+  testNodeLatency: (profile: ConnectionProfile): Promise<number> => {
+    return ipcRenderer.invoke('test-node-latency', profile);
+  },
+
+  // شروع اتصال با یک پروفایل
+  startV2Ray: (profile: ConnectionProfile): Promise<{ success: boolean, error?: string }> => {
+    return ipcRenderer.invoke('start-v2ray', profile);
+  },
+
+  // قطع اتصال فعلی
+  stopV2Ray: (): void => {
+    ipcRenderer.invoke('stop-v2ray');
+  },
 };
 
 // این API را به صورت امن به پنجره اصلی (window.api) اضافه می‌کنیم
