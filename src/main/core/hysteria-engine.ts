@@ -7,6 +7,8 @@ import { SocksProxyAgent } from 'socks-proxy-agent';
 import { ConnectionProfile } from '../../shared/types';
 import { getBinaryPath } from './utils';
 import { startSocksToHttpConverter } from './proxy-converter';
+// FIX: Added import for Buffer to resolve type error.
+import { Buffer } from 'buffer';
 
 const TEST_SOCKS_PORT = 10887; // Different port to avoid conflict
 const MAIN_SOCKS_PORT = 10808; // Hysteria provides SOCKS5

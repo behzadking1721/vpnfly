@@ -28,15 +28,15 @@ const PingIndicator: React.FC<{ ping?: number, status?: 'testing' | 'tested' }> 
 
 const ProfileItem: React.FC<ProfileItemProps> = ({ profile, isActive, isBusy, onConnect }) => {
   const baseClasses = "w-full flex items-center justify-between p-3 rounded-lg transition-all duration-200 cursor-pointer";
-  const activeClasses = isActive ? "bg-green-600/30 ring-2 ring-green-500" : "bg-gray-800 hover:bg-gray-700/80";
+  const activeClasses = isActive ? "bg-green-600/20 ring-1 ring-green-500" : "bg-[#3a3d44] hover:bg-[#43464e]";
   const disabledClasses = isBusy && !isActive ? "opacity-50 cursor-not-allowed" : "";
 
   return (
     <div className={`${baseClasses} ${activeClasses} ${disabledClasses}`} onClick={() => !isBusy && !isActive && onConnect()}>
-      <div className="flex-1 min-w-0">
-        <p className="font-semibold text-white truncate" title={profile.name}>{profile.name}</p>
-        <div className="flex items-center gap-2 text-xs text-gray-400">
-            <span className="font-mono text-cyan-400 uppercase">{profile.type}</span>
+      <div className="flex-1 min-w-0 pr-4">
+        <p className="font-semibold text-gray-200 truncate" title={profile.name}>{profile.name}</p>
+        <div className="flex items-center gap-2 text-xs text-gray-400 mt-1">
+            <span className="font-mono bg-gray-700 px-2 py-0.5 rounded text-cyan-300 uppercase">{profile.type}</span>
             <span className="truncate hidden sm:inline">{profile.server}:{profile.port}</span>
             <span className="bg-gray-700 px-2 py-0.5 rounded text-gray-300">{profile.subscriptionName}</span>
         </div>

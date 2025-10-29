@@ -3,59 +3,88 @@ import { ConnectionStatus } from '../../shared/types';
 
 interface ConnectionButtonProps {
   status: ConnectionStatus;
+  onConnect: () => void;
   onDisconnect: () => void;
-  activeProfileName?: string;
+  ping?: number;
 }
 
-const ConnectionButton: React.FC<ConnectionButtonProps> = ({ status, onDisconnect, activeProfileName }) => {
+const SignalIcon: React.FC = () => (
+    <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <path d="M0 0h24v24H0z" fill="none"/>
+        <path d="M12.01 21.49L23.64 7c-.45-.34-4.93-4-11.64-4C5.28 3 .81 6.66.36 7l11.63 14.49.01.01.01-.01z" opacity=".3"/>
+        <path d="M3.53 10.95l8.46 10.54.01.01.01-.01 8.46-10.54C20.04 10.62 16.81 8 12 8s-8.04 2.62-8.47 2.95z"/>
+    </svg>
+);
+
+const ConnectionButton: React.FC<ConnectionButtonProps> = ({ status, onConnect, onDisconnect, ping }) => {
   const isConnected = status === ConnectionStatus.CONNECTED;
   const isConnecting = status === ConnectionStatus.CONNECTING || status === ConnectionStatus.DISCONNECTING;
   
   const getStatusText = () => {
     switch (status) {
       case ConnectionStatus.CONNECTED:
-        return 'متصل';
+        return 'Connected';
       case ConnectionStatus.CONNECTING:
-        return 'در حال اتصال...';
+        return 'Connecting...';
       case ConnectionStatus.DISCONNECTED:
-        return 'قطع';
+        return 'Disconnected';
       case ConnectionStatus.DISCONNECTING:
-        return 'در حال قطع اتصال...';
+        return 'Disconnecting...';
       case ConnectionStatus.ERROR:
-        return 'خطا';
-      case ConnectionStatus.TESTING:
-        return 'در حال تست پینگ...';
+        return 'Error';
       default:
-        return 'نامشخص';
+        return 'Standby';
     }
   };
+
+  const statusColor = 
+    isConnected ? 'text-green-400' :
+    status === ConnectionStatus.ERROR ? 'text-red-400' :
+    'text-gray-400';
+
+  const buttonColor =
+    isConnected ? 'bg-green-500/10 border-green-500' :
+    'bg-gray-800/50 border-gray-600';
   
-  const buttonColor = isConnected ? 'bg-green-500' : 'bg-gray-600';
-  const ringColor = isConnected ? 'ring-green-400' : 'ring-gray-500';
-  const textColor = isConnected ? 'text-white' : 'text-gray-300';
+  const iconColor =
+    isConnected ? 'text-green-400' :
+    isConnecting ? 'text-cyan-400' :
+    'text-gray-500';
+
+  const handleClick = () => {
+    if (isConnected) {
+        onDisconnect();
+    } else {
+        onConnect();
+    }
+  }
 
   return (
-    <div className="flex flex-col items-center">
-      <button
-        onClick={isConnected ? onDisconnect : undefined}
-        disabled={isConnecting || !isConnected}
-        className={`relative w-40 h-40 rounded-full flex items-center justify-center font-bold text-2xl transition-all duration-300 shadow-2xl focus:outline-none ${buttonColor} ${textColor} ring-8 ${ringColor} ring-opacity-50 hover:ring-opacity-80 disabled:opacity-70 disabled:cursor-wait`}
-      >
-        {isConnecting && (
-          <div className="absolute inset-0 border-4 border-dashed rounded-full animate-spin border-cyan-400"></div>
-        )}
-        <span>{getStatusText()}</span>
-      </button>
-      {isConnected && activeProfileName && (
-        <div className="text-center mt-4">
-            <p className="text-gray-400 text-sm">متصل به:</p>
-            <p className="font-semibold text-cyan-300 truncate max-w-xs">{activeProfileName}</p>
-            <p className="text-xs text-green-400 mt-1">(پروکسی سیستم فعال است)</p>
+    <div className="flex flex-col items-center space-y-4">
+        <button
+            onClick={handleClick}
+            disabled={isConnecting}
+            className={`relative w-48 h-48 rounded-full flex items-center justify-center transition-all duration-300 border-2 focus:outline-none focus:ring-4 focus:ring-opacity-50 disabled:cursor-wait ${buttonColor} ${isConnected ? 'focus:ring-green-400' : 'focus:ring-cyan-500'}`}
+        >
+            {isConnecting && (
+                <div className="absolute inset-0 border-4 border-dashed rounded-full animate-spin border-cyan-400"></div>
+            )}
+            <div className={`transition-colors duration-300 ${iconColor}`}>
+                <SignalIcon />
+            </div>
+
+            {/* Glowing effect */}
+            {isConnected && <div className="absolute inset-0 rounded-full bg-green-500/20 animate-pulse"></div>}
+
+        </button>
+        <div className="text-center">
+            <p className={`text-xl font-bold transition-colors ${statusColor}`}>{getStatusText()}</p>
+            {isConnected && typeof ping === 'number' && (
+                <p className="text-sm text-gray-400 font-mono mt-1">
+                    {ping > 0 ? `${ping} ms` : '...'}
+                </p>
+            )}
         </div>
-      )}
-      {!isConnected && status !== ConnectionStatus.CONNECTING && (
-         <p className="text-center mt-4 text-gray-500">برای اتصال، یک پروفایل را از لیست انتخاب کنید.</p>
-      )}
     </div>
   );
 };

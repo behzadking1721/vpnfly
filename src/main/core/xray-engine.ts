@@ -6,6 +6,8 @@ import axios from 'axios';
 import { SocksProxyAgent } from 'socks-proxy-agent';
 import { ConnectionProfile } from '../../shared/types';
 import { getBinaryPath } from './utils';
+// FIX: Added import for Buffer to resolve type error.
+import { Buffer } from 'buffer';
 
 const TEST_SOCKS_PORT = 10888;
 const MAIN_SOCKS_PORT = 10808;

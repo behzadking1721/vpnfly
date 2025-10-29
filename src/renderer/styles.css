@@ -3,5 +3,24 @@
 @tailwind utilities;
 
 body {
-  font-family: 'Vazirmatn', sans-serif; /* فرض بر اینکه فونت در index.html اضافه شده */
+  font-family: 'Vazirmatn', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #202124;
+  color: #e3e3e3;
+}
+
+/* Custom scrollbar for a cleaner look */
+::-webkit-scrollbar {
+    width: 6px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: #4A4D54;
+    border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #5A5D64;
 }

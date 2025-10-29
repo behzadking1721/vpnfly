@@ -1,6 +1,13 @@
 import path from 'path';
 import fs from 'fs';
 import { app } from 'electron';
+// FIX: Import process to get correct typings for process.resourcesPath
+import process from 'process';
+// FIX: Add polyfill for __dirname in ES Modules
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export type EngineType = 'xray' | 'hysteria' | 'shadowsocks';
 

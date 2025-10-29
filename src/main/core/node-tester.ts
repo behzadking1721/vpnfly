@@ -6,6 +6,8 @@ import axios from 'axios';
 import { SocksProxyAgent } from 'socks-proxy-agent';
 import { ConnectionProfile } from '../../shared/types';
 import { getBinaryPath } from './utils';
+// FIX: Added import for Buffer to resolve type error.
+import { Buffer } from 'buffer';
 
 const TEST_SOCKS_PORT = 10888;
 const TEST_TARGET_URL = 'http://www.google.com/generate_204'; // A lightweight, no-content endpoint for connectivity tests

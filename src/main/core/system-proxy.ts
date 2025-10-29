@@ -1,5 +1,7 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
+// FIX: Import process to get correct typings for process.platform
+import process from 'process';
 
 const execPromise = promisify(exec);
 

@@ -31,16 +31,16 @@ const SubscriptionManager: React.FC<SubscriptionManagerProps> = ({ subscriptions
   };
   
   return (
-    <div className="bg-gray-800/70 rounded-xl p-6 shadow-lg backdrop-blur-sm space-y-4">
-      <h2 className="text-xl font-semibold border-b border-gray-700 pb-2 mb-4">مدیریت اشتراک‌ها</h2>
+    <div className="bg-[#2f3136] rounded-xl p-6 shadow-lg space-y-4 h-full flex flex-col">
+      <h2 className="text-xl font-semibold border-b border-gray-700/50 pb-2 mb-4 flex-shrink-0">مدیریت اشتراک‌ها</h2>
       
-      <div className="space-y-2">
+      <div className="space-y-2 flex-shrink-0">
         <input
           type="text"
           value={newSubName}
           onChange={(e) => setNewSubName(e.target.value)}
           placeholder="نام اشتراک (مثلا: خانه)"
-          className="w-full p-2 bg-gray-900 border border-gray-700 rounded-md focus:ring-2 focus:ring-cyan-500 focus:outline-none"
+          className="w-full p-2 bg-[#202124] border border-gray-700 rounded-md focus:ring-2 focus:ring-cyan-500 focus:outline-none"
           disabled={isBusy}
         />
         <input
@@ -48,7 +48,7 @@ const SubscriptionManager: React.FC<SubscriptionManagerProps> = ({ subscriptions
           value={newSubUrl}
           onChange={(e) => setNewSubUrl(e.target.value)}
           placeholder="لینک اشتراک"
-          className="w-full p-2 bg-gray-900 border border-gray-700 rounded-md focus:ring-2 focus:ring-cyan-500 focus:outline-none"
+          className="w-full p-2 bg-[#202124] border border-gray-700 rounded-md focus:ring-2 focus:ring-cyan-500 focus:outline-none"
           disabled={isBusy}
         />
         <button
@@ -60,10 +60,10 @@ const SubscriptionManager: React.FC<SubscriptionManagerProps> = ({ subscriptions
         </button>
       </div>
 
-      <div className="space-y-2 pt-4 max-h-40 overflow-y-auto">
+      <div className="space-y-2 pt-4 flex-1 overflow-y-auto">
         {subscriptions.map(sub => (
-          <div key={sub.id} className="flex justify-between items-center bg-gray-700/50 p-2 rounded-md">
-            <span className="font-semibold truncate" title={sub.url}>{sub.name}</span>
+          <div key={sub.id} className="flex justify-between items-center bg-[#3a3d44] p-2 rounded-md">
+            <span className="font-semibold truncate text-gray-300" title={sub.url}>{sub.name}</span>
             <button
               onClick={() => handleRemoveSubscription(sub.id)}
               disabled={isBusy}
@@ -74,14 +74,14 @@ const SubscriptionManager: React.FC<SubscriptionManagerProps> = ({ subscriptions
           </div>
         ))}
          {subscriptions.length === 0 && (
-            <p className="text-center text-sm text-gray-500">هیچ اشتراکی اضافه نشده است.</p>
+            <p className="text-center text-sm text-gray-500 pt-4">هیچ اشتراکی اضافه نشده است.</p>
          )}
       </div>
       
        <button
           onClick={onRefreshProfiles}
           disabled={isBusy || subscriptions.length === 0}
-          className="w-full mt-2 px-4 py-2 font-semibold text-white bg-gray-600 rounded-md hover:bg-gray-500 disabled:bg-gray-700 transition-colors"
+          className="w-full mt-2 px-4 py-2 font-semibold text-white bg-gray-600 rounded-md hover:bg-gray-500 disabled:bg-gray-700 transition-colors flex-shrink-0"
         >
           به‌روزرسانی همه پروفایل‌ها
         </button>

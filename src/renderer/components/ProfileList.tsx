@@ -19,12 +19,10 @@ const ProfileList: React.FC<ProfileListProps> = ({ profiles, setProfiles, isLoad
     setIsTesting(true);
     const updatedProfiles = [...profiles];
     
-    // Create a queue to run 5 tests at a time
     const concurrencyLimit = 5;
     const queue = [...updatedProfiles];
 
     const runTest = async (profile: ConnectionProfile) => {
-        // Set status to testing immediately for UI feedback
         const testingProfile = { ...profile, status: 'testing' as const };
         setProfiles(prev => prev.map(p => p.id === profile.id ? testingProfile : p));
         
@@ -32,7 +30,6 @@ const ProfileList: React.FC<ProfileListProps> = ({ profiles, setProfiles, isLoad
         
         const testedProfile = { ...testingProfile, ping, status: 'tested' as const };
         
-        // Update the main state with the result
         setProfiles(prev => prev.map(p => p.id === profile.id ? testedProfile : p));
     };
 
@@ -52,14 +49,10 @@ const ProfileList: React.FC<ProfileListProps> = ({ profiles, setProfiles, isLoad
 
   const handleSortByPing = () => {
     const sortedProfiles = [...profiles].sort((a, b) => {
-      // Treat undefined/null pings as infinite
       const pingA = a.ping ?? Infinity;
       const pingB = b.ping ?? Infinity;
-      
-      // Treat failed tests (-1) as infinite
       const effectivePingA = pingA === -1 ? Infinity : pingA;
       const effectivePingB = pingB === -1 ? Infinity : pingB;
-
       return effectivePingA - effectivePingB;
     });
     setProfiles(sortedProfiles);
@@ -77,10 +70,10 @@ const ProfileList: React.FC<ProfileListProps> = ({ profiles, setProfiles, isLoad
   const isBusy = isLoading || isTesting || connectionStatus === ConnectionStatus.CONNECTING || connectionStatus === ConnectionStatus.DISCONNECTING;
 
   return (
-    <div className="bg-gray-800/70 rounded-xl shadow-lg backdrop-blur-sm flex flex-col h-[calc(100vh-12rem)] min-h-[400px]">
-      <div className="p-4 border-b border-gray-700 space-y-3">
+    <div className="bg-[#2f3136] rounded-xl shadow-lg flex flex-col h-full">
+      <div className="p-4 border-b border-gray-700/50 space-y-3">
         <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold text-white">لیست پروفایل‌ها ({filteredProfiles.length})</h2>
+            <h2 className="text-xl font-semibold text-white">Proxies ({filteredProfiles.length})</h2>
             <div className="flex gap-2">
             <button onClick={handleSortByPing} disabled={isBusy || profiles.length === 0} className="px-3 py-1.5 text-sm font-semibold text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:bg-gray-600 transition-colors">
                 مرتب سازی
@@ -95,7 +88,7 @@ const ProfileList: React.FC<ProfileListProps> = ({ profiles, setProfiles, isLoad
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
             placeholder="جستجوی پروفایل بر اساس نام..."
-            className="w-full p-2 bg-gray-900 border border-gray-700 rounded-md focus:ring-2 focus:ring-cyan-500 focus:outline-none placeholder-gray-500"
+            className="w-full p-2 bg-[#202124] border border-gray-700 rounded-md focus:ring-2 focus:ring-cyan-500 focus:outline-none placeholder-gray-500"
             disabled={isBusy || profiles.length === 0}
         />
       </div>
